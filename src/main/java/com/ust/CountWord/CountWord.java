@@ -1,39 +1,51 @@
 package com.ust.CountWord;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.HashMap;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+
+import java.util.stream.Collectors;
 
 public class CountWord {
 
-	public static void main(String[] args) throws Exception {
-		Map m1 = new HashMap();
+	Map<String, Integer> countWordsFromFile(String filename) {
 
-		try (BufferedReader br = new BufferedReader(new FileReader("Example.txt"))) {
-			StringBuilder sb = new StringBuilder();
-			String line = br.readLine();
+		List<String> rows = getData(filename);
+		String data = String.join(", ", rows);
+		Map<String, Integer> map = countWords(data, 100);
+		System.out.println(map);
+		return map;
+	}
 
-			while (line != null) {
-				String[] words = line.split(" ");// those are your words
-				for (int i = 0; i < words.length; i++) {
-					if (m1.get(words[i]) == null) {
-						m1.put(words[i], 1);
-					} else {
-						int newValue = Integer.valueOf(String.valueOf(m1.get(words[i])));
-						newValue++;
-						m1.put(words[i], newValue);
-					}
-				}
-				sb.append(System.lineSeparator());
-				line = br.readLine();
-			}
+	Map<String, Integer> countWords(String str) {
+		return countWords(str, str.split(" ").length);
+	}
+
+	Map<String, Integer> countWords(String str, int mostCommon) {
+		return Arrays.stream(format(str)).filter(s -> !s.isEmpty())
+				.collect(Collectors.groupingBy(String::toString, Collectors.summingInt(x -> 1))).entrySet().stream()
+				.sorted(Map.Entry.<String, Integer>comparingByValue().reversed()).limit(mostCommon)
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+	}
+
+	private String[] format(String str) {
+		return str.toLowerCase().replaceAll("[^a-zA-Z ]", "").split(" ");
+	}
+
+	private List<String> getData(String filename) {
+		try {
+			return Files.readAllLines(Paths.get(filename));
+		} catch (IOException e) {
+			e.printStackTrace();
+			return new ArrayList<>();
 		}
-		Map<String, String> sorted = new TreeMap<String, String>(m1);
-		for (Object key : sorted.keySet()) {
-			System.out.println("Word: " + key + "\tCounts: " + m1.get(key));
-		}
+
 	}
 
 }
